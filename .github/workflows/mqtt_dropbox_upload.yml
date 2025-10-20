@@ -1,0 +1,25 @@
+name: MQTT zu Dropbox Upload
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Alle 5 Minuten (anpassbar)
+  workflow_dispatch:     # Manuell auslösbar
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Abhängigkeiten installieren
+        run: pip install paho-mqtt dropbox
+
+      - name: Skript ausführen
+        env:
+          MQTT_TOKEN: ${{ secrets.MQTT_TOKEN }}
+          DROPBOX_TOKEN: ${{ secrets.DROPBOX_TOKEN }}
+        run: python mqtt_to_dropbox.py
