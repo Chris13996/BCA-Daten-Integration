@@ -1,7 +1,7 @@
 name: MQTT zu Dropbox Upload
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Alle 5 Minuten (noch keine Ahnung ob, oder wie wir das brauchen)
+    - cron: '*/60 * * * *'  # Alle 5 Minuten (noch keine Ahnung ob, oder wie wir das brauchen)
   workflow_dispatch:     # Manuell auslösbar
 
 jobs:
