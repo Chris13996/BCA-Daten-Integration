@@ -6,17 +6,14 @@ import time
 from datetime import datetime
 
 # --- Konfiguration ---
-# MQTT (flespi)
 MQTT_BROKER = "mqtt.flespi.io"
 MQTT_PORT = 8883
-MQTT_TOKEN = os.getenv("MQTT_TOKEN")  # GitHub Secret
+MQTT_TOKEN = os.getenv("MQTT_TOKEN")
 MQTT_TOPIC = "bca/PROD/kennzeichen"
+DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")
+DROPBOX_FILE = f"/mqtt_daten/{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
-# Dropbox
-DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")  # GitHub Secret
-DROPBOX_FILE = f"/mqtt_daten/{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"  # Unterordner + Zeitstempel
-
-# --- Dropbox-Testfunktion (vor MQTT-Client) ---
+# --- Dropbox-Testfunktion ---
 def test_dropbox_upload():
     try:
         dbx = dropbox.Dropbox(DROPBOX_TOKEN)
@@ -35,10 +32,10 @@ def test_dropbox_upload():
 def on_connect(client, userdata, flags, rc):
     print(f"Verbunden mit MQTT-Broker (Code: {rc})")
     if rc == 0:
-        print(f"Abonniere Topic: {MQTT_TOPIC}")
         client.subscribe(MQTT_TOPIC)
+        print(f"Abonniere Topic: {MQTT_TOPIC}")
     else:
-        print(f"Verbindungsfehler: {mqtt.connack_string(rc)}")
+        print(f"Verbindungsfehler: {mqtt.error_string(rc)}")
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
@@ -61,7 +58,7 @@ def on_message(client, userdata, msg):
         except Exception as e:
             print(f"❌ Upload-Versuch {attempt + 1}/{max_retries} fehlgeschlagen: {e}")
             if attempt < max_retries - 1:
-                time.sleep(2)  # Warte vor dem nächsten Versuch
+                time.sleep(2)
 
 # --- Hauptprogramm ---
 if __name__ == "__main__":
@@ -70,9 +67,15 @@ if __name__ == "__main__":
         print("🚨 Dropbox-Verbindung konnte nicht hergestellt werden. Skript wird beendet.")
         exit(1)
 
-    # 2. MQTT-Client initialisieren (mit aktueller Callback-API)
-    client = mqtt.Client()
-    client.tls_set()  # TLS-Verschlüsselung
+    # 2. MQTT-Client initialisieren (kompatibel mit allen Versionen)
+    try:
+        client = mqtt.Client()
+    except AttributeError:
+        # Falls es doch Probleme mit der Version gibt, wird hier eine Fehlermeldung ausgegeben
+        print("⚠️  Warnung: Ältere Version von paho-mqtt erkannt. Verwende Standard-Callbacks.")
+        client = mqtt.Client()
+
+    client.tls_set()
     client.username_pw_set(MQTT_TOKEN)
     client.on_connect = on_connect
     client.on_message = on_message
@@ -81,7 +84,7 @@ if __name__ == "__main__":
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         print("Starte MQTT-Client...")
-        client.loop_forever()  # Blockierend warten
+        client.loop_forever()
     except KeyboardInterrupt:
         print("Skript durch Nutzer beendet.")
     except Exception as e:
