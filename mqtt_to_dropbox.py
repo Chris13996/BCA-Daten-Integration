@@ -13,8 +13,8 @@ MQTT_TOPIC = "bca/Test13/kennzeichen"
 DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")  # GitHub Secret
 DROPBOX_FOLDER = "/mqtt_daten/"  # Zielordner in Dropbox
 
-# --- MQTT-Callbacks ---
-def on_connect(client, userdata, flags, rc):
+# --- MQTT-Callbacks (kompatibel mit allen Versionen) ---
+def on_connect(client, userdata, flags, rc, properties=None):  # `properties` für neue Versionen
     if rc == 0:
         print(f"✅ Verbunden mit MQTT-Broker (Topic: {MQTT_TOPIC})")
         client.subscribe(MQTT_TOPIC)
@@ -50,13 +50,8 @@ def on_message(client, userdata, msg):
 
 # --- Hauptprogramm ---
 if __name__ == "__main__":
-    # MQTT-Client initialisieren (mit aktueller Callback-API)
-    try:
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-    except AttributeError:
-        # Fallback für ältere Versionen
-        client = mqtt.Client()
-
+    # MQTT-Client initialisieren
+    client = mqtt.Client()
     client.tls_set()
     client.username_pw_set(MQTT_TOKEN)
     client.on_connect = on_connect
