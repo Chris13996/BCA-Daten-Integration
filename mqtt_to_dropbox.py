@@ -32,7 +32,7 @@ def on_message(client, userdata, msg):
         print(f"Fehler beim Hochladen nach Dropbox: {e}")
 
 # MQTT-Client einrichten
-client = mqtt.Client()
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.tls_set()  # TLS-Verschlüsselung
 client.username_pw_set(MQTT_TOKEN)
 client.on_message = on_message
