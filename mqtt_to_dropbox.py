@@ -11,7 +11,7 @@ MQTT_PORT = 8883
 MQTT_TOKEN = os.getenv("MQTT_TOKEN")  # GitHub Secret
 MQTT_TOPIC = "bca/Test13/kennzeichen"
 DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")  # GitHub Secret
-DROPBOX_FILE = f"/mqtt_daten/{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+DROPBOX_FOLDER = "/mqtt_daten/"  # Zielordner in Dropbox
 
 # --- MQTT-Callbacks ---
 def on_connect(client, userdata, flags, rc):
@@ -27,9 +27,9 @@ def on_message(client, userdata, msg):
     print(f"Topic: {msg.topic}")
     print(f"Payload: {payload}")
 
-    # Speichere die Payload in einer temporären Datei für Debug-Zwecke
-    with open("temp_payload.json", "w") as f:
-        f.write(payload)
+    # Dateinamen mit Zeitstempel generieren
+    file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    dropbox_path = DROPBOX_FOLDER + file_name
 
     # Dropbox-Upload mit Wiederholungslogik
     max_retries = 3
@@ -38,10 +38,10 @@ def on_message(client, userdata, msg):
             dbx = dropbox.Dropbox(DROPBOX_TOKEN)
             dbx.files_upload(
                 payload.encode("utf-8"),
-                DROPBOX_FILE,
+                dropbox_path,
                 mode=dropbox.files.WriteMode.overwrite
             )
-            print(f"✅ Datei erfolgreich nach Dropbox hochgeladen: {DROPBOX_FILE}")
+            print(f"✅ Datei erfolgreich nach Dropbox hochgeladen: {dropbox_path}")
             break
         except Exception as e:
             print(f"❌ Upload-Versuch {attempt + 1}/{max_retries} fehlgeschlagen: {e}")
@@ -50,8 +50,13 @@ def on_message(client, userdata, msg):
 
 # --- Hauptprogramm ---
 if __name__ == "__main__":
-    # MQTT-Client initialisieren
-    client = mqtt.Client()
+    # MQTT-Client initialisieren (mit aktueller Callback-API)
+    try:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    except AttributeError:
+        # Fallback für ältere Versionen
+        client = mqtt.Client()
+
     client.tls_set()
     client.username_pw_set(MQTT_TOKEN)
     client.on_connect = on_connect
@@ -60,14 +65,8 @@ if __name__ == "__main__":
     # Verbindung herstellen
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
-        print("🔍 Warte auf MQTT-Nachrichten für 60 Sekunden...")
-
-        # Nur für 60 Sekunden auf Nachrichten warten (für GitHub Actions)
-        client.loop_start()
-        time.sleep(60)  # Warte 60 Sekunden auf Nachrichten
-        client.loop_stop()
-
-        print("Keine weiteren Nachrichten erwartet. Skript wird beendet.")
+        print("🔍 Warte auf MQTT-Nachrichten...")
+        client.loop_forever()  # Kontinuierlich auf Nachrichten warten
     except KeyboardInterrupt:
         print("Skript durch Nutzer beendet.")
     except Exception as e:
