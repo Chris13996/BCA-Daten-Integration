@@ -19,17 +19,20 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     print(f"Nachricht erhalten: {payload}")
 
-    try:
-        # Daten in Dropbox hochladen
-        dbx = dropbox.Dropbox(DROPBOX_TOKEN)
+# Upload-Funktion (ohne Refresh)
+try:
+    with open("temp_data.json", "w") as f:
+        f.write(payload)  # Speichere die Daten lokal (optional)
+
+    with open("temp_data.json", "rb") as f:
         dbx.files_upload(
-            payload.encode("utf-8"),
+            f.read(),
             DROPBOX_FILE,
             mode=dropbox.files.WriteMode.overwrite
         )
-        print(f"Daten erfolgreich nach Dropbox hochgeladen: {DROPBOX_FILE}")
-    except Exception as e:
-        print(f"Fehler beim Hochladen nach Dropbox: {e}")
+    print(f"Daten erfolgreich nach Dropbox hochgeladen: {DROPBOX_FILE}")
+except Exception as e:
+    print(f"Fehler beim Hochladen nach Dropbox: {e}")
 
 # MQTT-Client einrichten
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
