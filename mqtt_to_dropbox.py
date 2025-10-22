@@ -71,7 +71,7 @@ if __name__ == "__main__":
         exit(1)
 
     # 2. MQTT-Client initialisieren (mit aktueller Callback-API)
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    client = mqtt.Client()
     client.tls_set()  # TLS-Verschlüsselung
     client.username_pw_set(MQTT_TOKEN)
     client.on_connect = on_connect
