@@ -9,7 +9,7 @@ from datetime import datetime
 MQTT_BROKER = "mqtt.flespi.io"
 MQTT_PORT = 8883
 MQTT_TOKEN = os.getenv("MQTT_TOKEN")
-MQTT_TOPIC = "bca/PROD/kennzeichen"
+MQTT_TOPIC = "bca/Test13/kennzeichen"
 DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")
 DROPBOX_FILE = f"/mqtt_daten/{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
