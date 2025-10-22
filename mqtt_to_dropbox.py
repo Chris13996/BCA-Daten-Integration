@@ -9,7 +9,7 @@ from datetime import datetime
 MQTT_BROKER = "mqtt.flespi.io"
 MQTT_PORT = 8883
 MQTT_TOKEN = os.getenv("MQTT_TOKEN")  # GitHub Secret
-MQTT_TOPIC = "bca/Test13/kennzeichen"  # Korrigiertes Topic
+MQTT_TOPIC = "bca/Test13/kennzeichen"
 DROPBOX_TOKEN = os.getenv("DROPBOX_TOKEN")  # GitHub Secret
 DROPBOX_FILE = f"/mqtt_daten/{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
@@ -55,6 +55,10 @@ def on_message(client, userdata, msg):
     print(f"\n--- Neue MQTT-Nachricht empfangen ---")
     print(f"Topic: {msg.topic}")
     print(f"Payload: {payload}")
+
+    # Speichere die Payload in einer temporären Datei für Debug-Zwecke
+    with open("temp_payload.json", "w") as f:
+        f.write(payload)
 
     # Dropbox-Upload mit Wiederholungslogik
     max_retries = 3
